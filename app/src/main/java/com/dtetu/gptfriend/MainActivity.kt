@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.room.Room
+import com.dtetu.gptfriend.data.datasource.ChatGptDataSourceImpl
+import com.dtetu.gptfriend.data.datasource.LocalDataSourceImpl
+import com.dtetu.gptfriend.data.repository.ChatRepositoryImpl
+import com.dtetu.gptfriend.data.repository.MessageRepositoryImpl
 import com.dtetu.gptfriend.ui.theme.GPTFriendTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,7 +24,18 @@ class MainActivity : ComponentActivity() {
         ).allowMainThreadQueries().build()
     }
 
-    private val viewModel: ChatViewModel by viewModels { ChatViewModelFactory(db.messageDao()) }
+    private val viewModel: ChatViewModel by viewModels {
+        // Create data sources
+        val localDataSource = LocalDataSourceImpl(db.messageDao())
+        val chatGptDataSource = ChatGptDataSourceImpl()
+        
+        // Create repositories
+        val messageRepository = MessageRepositoryImpl(localDataSource)
+        val chatRepository = ChatRepositoryImpl(chatGptDataSource)
+        
+        // Create ViewModel factory
+        ChatViewModelFactory(messageRepository, chatRepository)
+    }
 
     @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
