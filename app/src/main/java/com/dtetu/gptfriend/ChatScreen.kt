@@ -1,20 +1,27 @@
 package com.dtetu.gptfriend
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -24,8 +31,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(viewModel: ChatViewModel) {
     val messages by viewModel.messages.collectAsState(initial = emptyList())
@@ -40,6 +51,23 @@ fun ChatScreen(viewModel: ChatViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
+        // Header
+        TopAppBar(
+            title = {
+                Text(
+                    text = "GPTFriend",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        )
+        
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -54,14 +82,15 @@ fun ChatScreen(viewModel: ChatViewModel) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             OutlinedTextField(
                 value = inputText,
                 onValueChange = { inputText = it },
                 modifier = Modifier.weight(1f),
-                label = { Text("Type a message") }
+                label = { Text("Type a message") },
+                shape = RoundedCornerShape(24.dp)
             )
             Button(
                 onClick = {
@@ -70,9 +99,12 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         inputText = ""
                     }
                 },
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(24.dp)
             ) {
-                Text("Send")
+                Text("Send", fontSize = 16.sp)
             }
         }
     }
@@ -80,20 +112,37 @@ fun ChatScreen(viewModel: ChatViewModel) {
 
 @Composable
 fun MessageBubble(message: Message) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = if (message.isUser) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
-            ),
-            modifier = Modifier.padding(8.dp)
+        val maxCardWidth = maxWidth * 0.75f
+        
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = if (message.isUser) Alignment.End else Alignment.Start
         ) {
             Text(
-                text = message.text,
-                modifier = Modifier.padding(8.dp)
+                text = if (message.isUser) "Moi" else "GPTFriend",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = if (message.isUser) 
+                        MaterialTheme.colorScheme.primaryContainer 
+                    else 
+                        MaterialTheme.colorScheme.surfaceVariant
+                ),
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .widthIn(max = maxCardWidth)
+            ) {
+                Text(
+                    text = message.text,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
         }
     }
 }
