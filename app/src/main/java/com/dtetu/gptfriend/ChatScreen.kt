@@ -2,9 +2,11 @@ package com.dtetu.gptfriend
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,10 +15,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -54,13 +61,29 @@ fun ChatScreen(viewModel: ChatViewModel) {
         // Header
         TopAppBar(
             title = {
-                Text(
-                    text = "GPTFriend",
+                Box(
                     modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "GPTFriend",
+                        textAlign = TextAlign.Center,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            navigationIcon = {
+                // Invisible spacer to balance the delete button
+                Spacer(modifier = Modifier.padding(18.dp))
+            },
+            actions = {
+                IconButton(onClick = { viewModel.clearConversation() }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Clear conversation"
+                    )
+                }
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -99,12 +122,13 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         inputText = ""
                     }
                 },
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .padding(vertical = 8.dp),
+                modifier = Modifier.padding(start = 8.dp),
                 shape = RoundedCornerShape(24.dp)
             ) {
-                Text("Send", fontSize = 16.sp)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Send,
+                    contentDescription = "Send message"
+                )
             }
         }
     }

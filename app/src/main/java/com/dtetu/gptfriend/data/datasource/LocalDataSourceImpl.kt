@@ -24,6 +24,6 @@ class LocalDataSourceImpl(
     }
 
     override suspend fun clearAllMessages() {
-        // Implementation can be added when needed
+        messageDao.deleteAllMessages()
     }
 }

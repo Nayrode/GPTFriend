@@ -15,4 +15,7 @@ interface MessageDao {
 
     @Insert
     suspend fun insertMessage(message: Message)
+
+    @Query("DELETE FROM message")
+    suspend fun deleteAllMessages()
 }

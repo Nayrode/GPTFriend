@@ -50,6 +50,12 @@ class ChatViewModel(
             }
         }
     }
+
+    fun clearConversation() {
+        viewModelScope.launch {
+            messageRepository.clearAllMessages()
+        }
+    }
 }
 
 class ChatViewModelFactory(
