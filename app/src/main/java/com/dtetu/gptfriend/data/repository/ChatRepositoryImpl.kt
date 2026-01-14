@@ -5,10 +5,12 @@ import com.dtetu.gptfriend.data.datasource.ChatGptDataSource
 
 /**
  * Implementation of ChatRepository
- * Handles all ChatGPT API operations
+ * Handles all ChatGPT API operations with local-first principle
+ * API responses are saved directly to local database
  */
 class ChatRepositoryImpl(
-    private val chatGptDataSource: ChatGptDataSource
+    private val chatGptDataSource: ChatGptDataSource,
+    private val messageRepository: MessageRepository
 ) : ChatRepository {
 
     override suspend fun initialize(apiKey: String): Result<Unit> {
@@ -34,19 +36,28 @@ class ChatRepositoryImpl(
         message: String,
         conversationHistory: List<Message>,
         systemPrompt: String
-    ): Result<String> {
+    ) {
         if (!isInitialized()) {
-            return Result.failure(
-                IllegalStateException("OpenAI client is not initialized. Please check previous error messages and restart the app.")
+            // Save error message to local database
+            messageRepository.saveMessage(
+                "OpenAI client is not initialized. Please check previous error messages and restart the app.",
+                isUser = false
             )
+            return
         }
 
-        return chatGptDataSource.sendMessage(message, conversationHistory, systemPrompt).fold(
+        // Call API and save response to local database
+        chatGptDataSource.sendMessage(message, conversationHistory, systemPrompt).fold(
             onSuccess = { response ->
-                Result.success(response)
+                // Save API response to local database
+                messageRepository.saveMessage(response, isUser = false)
             },
             onFailure = { error ->
-                Result.failure(Exception("Error: ${error.message}"))
+                // Save error message to local database
+                messageRepository.saveMessage(
+                    "Error: ${error.message}",
+                    isUser = false
+                )
             }
         )
     }

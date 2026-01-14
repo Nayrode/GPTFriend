@@ -31,7 +31,8 @@ class MainActivity : ComponentActivity() {
         
         // Create repositories
         val messageRepository = MessageRepositoryImpl(localDataSource)
-        val chatRepository = ChatRepositoryImpl(chatGptDataSource)
+        // ChatRepository now needs MessageRepository for local-first architecture
+        val chatRepository = ChatRepositoryImpl(chatGptDataSource, messageRepository)
         
         // Create ViewModel factory
         ChatViewModelFactory(messageRepository, chatRepository)

@@ -102,16 +102,19 @@ fun ChatScreen(viewModel: ChatViewModel) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 24.dp)
-                .height(64.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp, vertical = 24.dp),
+            verticalAlignment = Alignment.Bottom
         ) {
             OutlinedTextField(
                 value = inputText,
                 onValueChange = { inputText = it },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 56.dp, max = 150.dp),
                 label = { Text("Type a message") },
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(24.dp),
+                maxLines = 5,
+                minLines = 1
             )
             Button(
                 onClick = {
@@ -120,7 +123,9 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         inputText = ""
                     }
                 },
-                modifier = Modifier.padding(start = 8.dp).height(50.dp),
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .height(56.dp),
                 shape = RoundedCornerShape(24.dp)
             ) {
                 Icon(
