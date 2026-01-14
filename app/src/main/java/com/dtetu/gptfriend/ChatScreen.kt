@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.imePadding
@@ -49,9 +50,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -107,18 +114,52 @@ fun ChatScreen(viewModel: ChatViewModel) {
             }
         }
         
-        LazyColumn(
-            state = listState,
+        Box(
             modifier = Modifier
                 .weight(1f)
-                .padding(8.dp)
-                .clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }) {
+                .fillMaxWidth()
+                .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
                     focusManager.clearFocus()
-                },
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                }
         ) {
-            items(messages) { message ->
-                MessageBubble(message)
+            if (messages.isEmpty()) {
+                // Show sleeping robot when no messages
+                Box(
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+                    // Robot image centered
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(
+                            id = if (isDarkTheme) R.drawable.sleeping_robot_dark else R.drawable.sleeping_robot
+                        ),
+                        contentDescription = "No messages yet",
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(32.dp)
+                            .alpha(0.2f)
+                    )
+                    // Animated Z's positioned at top right of robot
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .offset(x = 300.dp, y = 600.dp) // Offset to position at top right of robot
+                            .size(300.dp) // Fixed size to prevent layout shifts
+                    ) {
+                        SleepingZAnimation(isDarkTheme = isDarkTheme)
+                    }
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(messages) { message ->
+                        MessageBubble(message)
+                    }
+                }
             }
         }
         Row(
@@ -222,5 +263,51 @@ fun MessageBubble(message: Message) {
                 )
             }
         }
+    }
+}
+@Composable
+fun SleepingZAnimation(isDarkTheme: Boolean) {
+    val infiniteTransition = rememberInfiniteTransition(label = "sleeping")
+    
+    // Create independent animations for each Z to avoid flicker
+    repeat(3) { index ->
+        val progress by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = 2000,
+                    delayMillis = index * 667, // Stagger by ~667ms for even spacing
+                    easing = LinearEasing
+                ),
+                repeatMode = RepeatMode.Restart
+            ),
+            label = "z_$index"
+        )
+        
+        // Calculate position and alpha based on progress
+        // Parent Box is already positioned at robot's top right via offset
+        val offsetX = 250f * progress
+        val offsetY = -300f * progress
+        // Smooth fade-in from 5-10%, then fade out
+        val alpha = when {
+            progress < 0.05f -> 0f // Hidden at start
+            progress < 0.10f -> 0.2f * ((progress - 0.05f) / 0.05f) // Fade in
+            else -> 0.2f * (1f - progress) // Fade out
+        }
+        
+        // Always render to avoid recomposition flicker, use alpha for visibility
+        Text(
+            text = "Z",
+            fontSize = (20 + 15 * progress).sp,
+            fontWeight = FontWeight.Bold,
+            color = if (isDarkTheme) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Black,
+            modifier = Modifier
+                .graphicsLayer {
+                    translationX = offsetX
+                    translationY = offsetY
+                }
+                .alpha(alpha)
+        )
     }
 }
