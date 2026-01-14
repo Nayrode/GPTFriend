@@ -1,6 +1,8 @@
 package com.dtetu.gptfriend
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -49,6 +51,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -61,6 +64,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val isDarkTheme = isSystemInDarkTheme()
+    val focusManager = LocalFocusManager.current
 
     // Automatically scroll to the bottom when a new message arrives
     LaunchedEffect(messages.size) {
@@ -107,7 +111,10 @@ fun ChatScreen(viewModel: ChatViewModel) {
             state = listState,
             modifier = Modifier
                 .weight(1f)
-                .padding(8.dp),
+                .padding(8.dp)
+                .clickable(indication = null, interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }) {
+                    focusManager.clearFocus()
+                },
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(messages) { message ->
