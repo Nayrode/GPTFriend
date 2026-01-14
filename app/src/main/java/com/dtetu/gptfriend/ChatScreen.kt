@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -57,6 +60,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
     val messages by viewModel.messages.collectAsState(initial = emptyList())
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val isDarkTheme = isSystemInDarkTheme()
 
     // Automatically scroll to the bottom when a new message arrives
     LaunchedEffect(messages.size) {
@@ -69,29 +73,35 @@ fun ChatScreen(viewModel: ChatViewModel) {
         .fillMaxSize()
         .statusBarsPadding()) {
         // Header
-        TopAppBar(
-            title = {
-                Text(
-                    text = "GPTFriend",
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .background(
+                    if (isDarkTheme) androidx.compose.ui.graphics.Color(0xFF2C2C2C) 
+                    else MaterialTheme.colorScheme.primaryContainer
                 )
-            },
-            actions = {
-                IconButton(onClick = { viewModel.clearConversation() }) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Clear conversation"
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ) {
+            Text(
+                text = "GPTFriend",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (isDarkTheme) androidx.compose.ui.graphics.Color.White 
+                    else MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.align(Alignment.Center)
             )
-        )
+            IconButton(
+                onClick = { viewModel.clearConversation() },
+                modifier = Modifier.align(Alignment.CenterEnd)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Clear conversation",
+                    tint = if (isDarkTheme) androidx.compose.ui.graphics.Color.White 
+                        else MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
         
         LazyColumn(
             state = listState,
@@ -121,7 +131,18 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 label = { Text("Type a message") },
                 shape = RoundedCornerShape(24.dp),
                 maxLines = 5,
-                minLines = 1
+                minLines = 1,
+                colors = if (isDarkTheme) {
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = androidx.compose.ui.graphics.Color.White,
+                        unfocusedBorderColor = androidx.compose.ui.graphics.Color.White,
+                        focusedLabelColor = androidx.compose.ui.graphics.Color.White,
+                        unfocusedLabelColor = androidx.compose.ui.graphics.Color.White,
+                        cursorColor = androidx.compose.ui.graphics.Color.White
+                    )
+                } else {
+                    OutlinedTextFieldDefaults.colors()
+                }
             )
             Button(
                 onClick = {
@@ -133,7 +154,15 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 modifier = Modifier
                     .padding(start = 8.dp)
                     .height(56.dp),
-                shape = RoundedCornerShape(24.dp)
+                shape = RoundedCornerShape(24.dp),
+                colors = if (isDarkTheme) {
+                    ButtonDefaults.buttonColors(
+                        containerColor = androidx.compose.ui.graphics.Color.White,
+                        contentColor = androidx.compose.ui.graphics.Color.Black
+                    )
+                } else {
+                    ButtonDefaults.buttonColors()
+                }
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Send,
@@ -146,6 +175,7 @@ fun ChatScreen(viewModel: ChatViewModel) {
 
 @Composable
 fun MessageBubble(message: Message) {
+    val isDarkTheme = isSystemInDarkTheme()
     BoxWithConstraints(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -163,10 +193,12 @@ fun MessageBubble(message: Message) {
             )
             Card(
                 colors = CardDefaults.cardColors(
-                    containerColor = if (message.isUser) 
-                        MaterialTheme.colorScheme.primaryContainer 
-                    else 
+                    containerColor = if (message.isUser) {
+                        if (isDarkTheme) androidx.compose.ui.graphics.Color.White
+                        else MaterialTheme.colorScheme.primaryContainer
+                    } else {
                         MaterialTheme.colorScheme.surfaceVariant
+                    }
                 ),
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
@@ -174,7 +206,12 @@ fun MessageBubble(message: Message) {
             ) {
                 Text(
                     text = message.text,
-                    modifier = Modifier.padding(12.dp)
+                    modifier = Modifier.padding(12.dp),
+                    color = if (message.isUser && isDarkTheme) {
+                        androidx.compose.ui.graphics.Color.Black
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
                 )
             }
         }
