@@ -1,6 +1,5 @@
 package com.dtetu.gptfriend
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -38,13 +37,12 @@ class MainActivity : ComponentActivity() {
         ChatViewModelFactory(messageRepository, chatRepository)
     }
 
-    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             GPTFriendTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) {
+                Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
                     ChatScreen(this.viewModel)
                 }
             }
