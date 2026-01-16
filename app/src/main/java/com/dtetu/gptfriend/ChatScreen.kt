@@ -80,16 +80,129 @@ fun ChatScreen(viewModel: ChatViewModel) {
         }
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .statusBarsPadding()) {
-        // Header
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+    ) {
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Header placeholder for spacing
+            Spacer(modifier = Modifier.height(64.dp))
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }) {
+                        focusManager.clearFocus()
+                    }
+            ) {
+                if (messages.isEmpty()) {
+                    // Show sleeping robot and Z animation overlapped
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(32.dp)
+                    ) {
+                        // Robot image
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(
+                                id = if (isDarkTheme) R.drawable.sleeping_robot_dark else R.drawable.sleeping_robot
+                            ),
+                            contentDescription = "No messages yet",
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .alpha(0.2f)
+                        )
+                        // Animated Z's overlapped on top of robot at center
+                        SleepingZAnimation(
+                            isDarkTheme = isDarkTheme,
+                            modifier = Modifier.align(Alignment.Center).offset(y = (-50).dp)
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(messages) { message ->
+                            MessageBubble(message)
+                        }
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 56.dp, max = 150.dp),
+                    label = { Text("Type a message") },
+                    shape = RoundedCornerShape(24.dp),
+                    maxLines = 5,
+                    minLines = 1,
+                    colors = if (isDarkTheme) {
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = androidx.compose.ui.graphics.Color.White,
+                            unfocusedBorderColor = androidx.compose.ui.graphics.Color.White,
+                            focusedLabelColor = androidx.compose.ui.graphics.Color.White,
+                            unfocusedLabelColor = androidx.compose.ui.graphics.Color.White,
+                            cursorColor = androidx.compose.ui.graphics.Color.White
+                        )
+                    } else {
+                        OutlinedTextFieldDefaults.colors()
+                    }
+                )
+                Button(
+                    onClick = {
+                        if (inputText.isNotBlank()) {
+                            viewModel.sendMessage(inputText, true)
+                            inputText = ""
+                        }
+                    },
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .height(56.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = if (isDarkTheme) {
+                        ButtonDefaults.buttonColors(
+                            containerColor = androidx.compose.ui.graphics.Color.White,
+                            contentColor = androidx.compose.ui.graphics.Color.Black
+                        )
+                    } else {
+                        ButtonDefaults.buttonColors()
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Send,
+                        contentDescription = "Send message"
+                    )
+                }
+            }
+        }
+        
+        // Header on top (drawn last to be above Z animation)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
+                .align(Alignment.TopStart)
                 .background(
-                    if (isDarkTheme) androidx.compose.ui.graphics.Color(0xFF2C2C2C) 
+                    if (isDarkTheme) androidx.compose.ui.graphics.Color(0xFF2C2C2C)
                     else MaterialTheme.colorScheme.primaryContainer
                 )
         ) {
@@ -97,8 +210,8 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 text = "GPTFriend",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (isDarkTheme) androidx.compose.ui.graphics.Color.White 
-                    else MaterialTheme.colorScheme.onPrimaryContainer,
+                color = if (isDarkTheme) androidx.compose.ui.graphics.Color.White
+                else MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.align(Alignment.Center)
             )
             IconButton(
@@ -108,206 +221,105 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Clear conversation",
-                    tint = if (isDarkTheme) androidx.compose.ui.graphics.Color.White 
-                        else MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-        }
-        
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
-                    focusManager.clearFocus()
-                }
-        ) {
-            if (messages.isEmpty()) {
-                // Show sleeping robot when no messages
-                Box(
-                    modifier = Modifier.align(Alignment.Center)
-                ) {
-                    // Robot image centered
-                    androidx.compose.foundation.Image(
-                        painter = painterResource(
-                            id = if (isDarkTheme) R.drawable.sleeping_robot_dark else R.drawable.sleeping_robot
-                        ),
-                        contentDescription = "No messages yet",
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(32.dp)
-                            .alpha(0.2f)
-                    )
-                    // Animated Z's positioned at top right of robot
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .offset(x = 300.dp, y = 600.dp) // Offset to position at top right of robot
-                            .size(300.dp) // Fixed size to prevent layout shifts
-                    ) {
-                        SleepingZAnimation(isDarkTheme = isDarkTheme)
-                    }
-                }
-            } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(messages) { message ->
-                        MessageBubble(message)
-                    }
-                }
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.Bottom
-        ) {
-            OutlinedTextField(
-                value = inputText,
-                onValueChange = { inputText = it },
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = 56.dp, max = 150.dp),
-                label = { Text("Type a message") },
-                shape = RoundedCornerShape(24.dp),
-                maxLines = 5,
-                minLines = 1,
-                colors = if (isDarkTheme) {
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = androidx.compose.ui.graphics.Color.White,
-                        unfocusedBorderColor = androidx.compose.ui.graphics.Color.White,
-                        focusedLabelColor = androidx.compose.ui.graphics.Color.White,
-                        unfocusedLabelColor = androidx.compose.ui.graphics.Color.White,
-                        cursorColor = androidx.compose.ui.graphics.Color.White
-                    )
-                } else {
-                    OutlinedTextFieldDefaults.colors()
-                }
-            )
-            Button(
-                onClick = {
-                    if (inputText.isNotBlank()) {
-                        viewModel.sendMessage(inputText, true)
-                        inputText = ""
-                    }
-                },
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .height(56.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = if (isDarkTheme) {
-                    ButtonDefaults.buttonColors(
-                        containerColor = androidx.compose.ui.graphics.Color.White,
-                        contentColor = androidx.compose.ui.graphics.Color.Black
-                    )
-                } else {
-                    ButtonDefaults.buttonColors()
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.Send,
-                    contentDescription = "Send message"
+                    tint = if (isDarkTheme) androidx.compose.ui.graphics.Color.White
+                    else MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
     }
 }
 
-@Composable
-fun MessageBubble(message: Message) {
-    val isDarkTheme = isSystemInDarkTheme()
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        val maxCardWidth = maxWidth * 0.75f
-        
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = if (message.isUser) Alignment.End else Alignment.Start
+    @Composable
+    fun MessageBubble(message: Message) {
+        val isDarkTheme = isSystemInDarkTheme()
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(
-                text = if (message.isUser) "Moi" else "GPTFriend",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-            )
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = if (message.isUser) {
-                        if (isDarkTheme) androidx.compose.ui.graphics.Color.White
-                        else MaterialTheme.colorScheme.primaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    }
-                ),
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .widthIn(max = maxCardWidth)
+            val maxCardWidth = maxWidth * 0.75f
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = if (message.isUser) Alignment.End else Alignment.Start
             ) {
                 Text(
-                    text = message.text,
-                    modifier = Modifier.padding(12.dp),
-                    color = if (message.isUser && isDarkTheme) {
-                        androidx.compose.ui.graphics.Color.Black
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    }
+                    text = if (message.isUser) "Moi" else "GPTFriend",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (message.isUser) {
+                            if (isDarkTheme) androidx.compose.ui.graphics.Color.White
+                            else MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        }
+                    ),
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .widthIn(max = maxCardWidth)
+                ) {
+                    Text(
+                        text = message.text,
+                        modifier = Modifier.padding(12.dp),
+                        color = if (message.isUser && isDarkTheme) {
+                            androidx.compose.ui.graphics.Color.Black
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun SleepingZAnimation(isDarkTheme: Boolean, modifier: Modifier = Modifier) {
+        val infiniteTransition = rememberInfiniteTransition(label = "sleeping")
+
+        Box(modifier = modifier) {
+            // Create independent animations for each Z to avoid flicker
+            repeat(3) { index ->
+                val progress by infiniteTransition.animateFloat(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(
+                            durationMillis = 2000,
+                            delayMillis = index * 667, // Stagger by ~667ms for even spacing
+                            easing = LinearEasing
+                        ),
+                        repeatMode = RepeatMode.Restart
+                    ),
+                    label = "z_$index"
+                )
+
+                // Calculate position and alpha based on progress
+                // Z's float upward from center of robot
+                val offsetX = 40f * progress // Slight horizontal drift
+                val offsetY = -200f * progress // Float upward
+                // Smooth fade-in from 5-10%, then fade out
+                val alpha = when {
+                    progress < 0.05f -> 0f // Hidden at start
+                    progress < 0.10f -> 0.2f * ((progress - 0.05f) / 0.05f) // Fade in
+                    else -> 0.2f * (1f - progress) // Fade out
+                }
+
+                // Always render to avoid recomposition flicker, use alpha for visibility
+                Text(
+                    text = "Z",
+                    fontSize = (20 + 15 * progress).sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isDarkTheme) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Black,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .graphicsLayer {
+                            translationX = offsetX
+                            translationY = offsetY
+                        }
+                        .alpha(alpha)
                 )
             }
         }
     }
-}
-@Composable
-fun SleepingZAnimation(isDarkTheme: Boolean) {
-    val infiniteTransition = rememberInfiniteTransition(label = "sleeping")
-    
-    // Create independent animations for each Z to avoid flicker
-    repeat(3) { index ->
-        val progress by infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(
-                    durationMillis = 2000,
-                    delayMillis = index * 667, // Stagger by ~667ms for even spacing
-                    easing = LinearEasing
-                ),
-                repeatMode = RepeatMode.Restart
-            ),
-            label = "z_$index"
-        )
-        
-        // Calculate position and alpha based on progress
-        // Parent Box is already positioned at robot's top right via offset
-        val offsetX = 250f * progress
-        val offsetY = -300f * progress
-        // Smooth fade-in from 5-10%, then fade out
-        val alpha = when {
-            progress < 0.05f -> 0f // Hidden at start
-            progress < 0.10f -> 0.2f * ((progress - 0.05f) / 0.05f) // Fade in
-            else -> 0.2f * (1f - progress) // Fade out
-        }
-        
-        // Always render to avoid recomposition flicker, use alpha for visibility
-        Text(
-            text = "Z",
-            fontSize = (20 + 15 * progress).sp,
-            fontWeight = FontWeight.Bold,
-            color = if (isDarkTheme) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Black,
-            modifier = Modifier
-                .graphicsLayer {
-                    translationX = offsetX
-                    translationY = offsetY
-                }
-                .alpha(alpha)
-        )
-    }
-}
