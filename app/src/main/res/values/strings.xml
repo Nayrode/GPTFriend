@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">GPTFriend</string>
+    <string name="default_notification_channel_id">miss_you_notifications</string>
 </resources>

@@ -30,6 +30,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -45,7 +48,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,21 +59,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.content.Intent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(viewModel: ChatViewModel) {
-    val messages by viewModel.messages.collectAsState(initial = emptyList())
+    val messages by viewModel.messages.collectAsStateWithLifecycle(initialValue = emptyList())
+    val notificationsEnabled by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val isDarkTheme = isSystemInDarkTheme()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
     // Automatically scroll to the bottom when a new message arrives
     LaunchedEffect(messages.size) {
@@ -132,7 +139,12 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(messages) { message ->
-                            MessageBubble(message)
+                            MessageBubble(
+                                message = message,
+                                onShare = { text ->
+                                    shareText(context, text)
+                                }
+                            )
                         }
                     }
                 }
@@ -214,23 +226,39 @@ fun ChatScreen(viewModel: ChatViewModel) {
                 else MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.align(Alignment.Center)
             )
-            IconButton(
-                onClick = { viewModel.clearConversation() },
-                modifier = Modifier.align(Alignment.CenterEnd)
+            Row(
+                modifier = Modifier.align(Alignment.CenterEnd),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Clear conversation",
-                    tint = if (isDarkTheme) androidx.compose.ui.graphics.Color.White
-                    else MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                // Notification toggle button
+                IconButton(
+                    onClick = { viewModel.toggleNotifications(!notificationsEnabled) }
+                ) {
+                    Icon(
+                        imageVector = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
+                        contentDescription = if (notificationsEnabled) "Disable notifications" else "Enable notifications",
+                        tint = if (isDarkTheme) androidx.compose.ui.graphics.Color.White
+                        else MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+                // Clear conversation button
+                IconButton(
+                    onClick = { viewModel.clearConversation() }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Clear conversation",
+                        tint = if (isDarkTheme) androidx.compose.ui.graphics.Color.White
+                        else MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         }
     }
 }
 
     @Composable
-    fun MessageBubble(message: Message) {
+    fun MessageBubble(message: Message, onShare: (String) -> Unit) {
         val isDarkTheme = isSystemInDarkTheme()
         BoxWithConstraints(
             modifier = Modifier.fillMaxWidth()
@@ -260,18 +288,49 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         .padding(horizontal = 8.dp)
                         .widthIn(max = maxCardWidth)
                 ) {
-                    Text(
-                        text = message.text,
-                        modifier = Modifier.padding(12.dp),
-                        color = if (message.isUser && isDarkTheme) {
-                            androidx.compose.ui.graphics.Color.Black
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = message.text,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(12.dp),
+                            color = if (message.isUser && isDarkTheme) {
+                                androidx.compose.ui.graphics.Color.Black
+                            } else {
+                                MaterialTheme.colorScheme.onSurface
+                            }
+                        )
+                        // Show share button only for GPT messages
+                        if (!message.isUser) {
+                            IconButton(
+                                onClick = { onShare(message.text) },
+                                modifier = Modifier.padding(end = 4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Share,
+                                    contentDescription = "Share message",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                         }
-                    )
+                    }
                 }
             }
         }
+    }
+
+    fun shareText(context: android.content.Context, text: String) {
+        val sendIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, text)
+            type = "text/plain"
+        }
+        val shareIntent = Intent.createChooser(sendIntent, "Share GPT response")
+        context.startActivity(shareIntent)
     }
 
     @Composable

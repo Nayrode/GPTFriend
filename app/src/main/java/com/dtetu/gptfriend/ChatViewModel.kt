@@ -1,19 +1,27 @@
 package com.dtetu.gptfriend
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.dtetu.gptfriend.data.repository.ChatRepository
 import com.dtetu.gptfriend.data.repository.MessageRepository
+import com.dtetu.gptfriend.notification.NotificationScheduler
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
     private val messageRepository: MessageRepository,
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val context: Context
 ) : ViewModel() {
 
     val messages: Flow<List<Message>> = messageRepository.getAllMessages()
+    
+    private val _notificationsEnabled = MutableStateFlow(true)
+    val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled
 
     init {
         viewModelScope.launch {
@@ -49,16 +57,26 @@ class ChatViewModel(
             messageRepository.clearAllMessages()
         }
     }
+
+    fun toggleNotifications(enabled: Boolean) {
+        _notificationsEnabled.value = enabled
+        if (enabled) {
+            NotificationScheduler.scheduleNotifications(context)
+        } else {
+            NotificationScheduler.cancelNotifications(context)
+        }
+    }
 }
 
 class ChatViewModelFactory(
     private val messageRepository: MessageRepository,
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val context: Context
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ChatViewModel(messageRepository, chatRepository) as T
+            return ChatViewModel(messageRepository, chatRepository, context) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
