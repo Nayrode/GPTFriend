@@ -68,17 +68,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import android.content.Intent
+import com.dtetu.gptfriend.ads.AdManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(viewModel: ChatViewModel) {
+fun ChatScreen(viewModel: ChatViewModel, adManager: AdManager) {
     val messages by viewModel.messages.collectAsStateWithLifecycle(initialValue = emptyList())
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
+    val shouldShowAd by viewModel.shouldShowAd.collectAsStateWithLifecycle()
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val isDarkTheme = isSystemInDarkTheme()
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
+
+    // Show ad when the flag is set
+    LaunchedEffect(shouldShowAd) {
+        if (shouldShowAd && context is android.app.Activity) {
+            adManager.showAd(context) {
+                // Reset the flag after ad is closed
+                viewModel.onAdShown()
+            }
+        }
+    }
 
     // Automatically scroll to the bottom when a new message arrives
     LaunchedEffect(messages.size) {

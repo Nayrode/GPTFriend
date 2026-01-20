@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1062809058279",
+    "project_id": "gptfriend-f0461",
+    "storage_bucket": "gptfriend-f0461.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1062809058279:android:f0d77d3d983b3ad35a5b42",
+        "android_client_info": {
+          "package_name": "com.dtetu.gptfriend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0giiLBsnO21w5EqYyZkkpMf26SXvePGQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

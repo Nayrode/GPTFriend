@@ -6,7 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-    // id("com.google.gms.google-services") // Commented out - add google-services.json if needed
+    //id("com.android.application")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -79,9 +80,12 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     
     // Firebase Cloud Messaging
-    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
-    implementation("com.google.firebase:firebase-messaging-ktx")
-    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-analytics")
+
+    // Google AdMob for advertising
+    implementation("com.google.android.gms:play-services-ads:23.6.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

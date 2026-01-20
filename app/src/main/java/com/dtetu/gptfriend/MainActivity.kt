@@ -16,6 +16,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.room.Room
+import com.dtetu.gptfriend.ads.AdManager
 import com.dtetu.gptfriend.data.datasource.ChatGptDataSourceImpl
 import com.dtetu.gptfriend.data.datasource.LocalDataSourceImpl
 import com.dtetu.gptfriend.data.repository.ChatRepositoryImpl
@@ -23,8 +24,6 @@ import com.dtetu.gptfriend.data.repository.MessageRepositoryImpl
 import com.dtetu.gptfriend.notification.NotificationScheduler
 import com.dtetu.gptfriend.ui.theme.GPTFriendTheme
 import com.google.firebase.messaging.FirebaseMessaging
-
-// import com.google.firebase.messaging.FirebaseMessaging // Disabled until Firebase is configured
 
 class MainActivity : ComponentActivity() {
     companion object {
@@ -36,6 +35,11 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             AppDatabase::class.java, "gpt-friend.db"
         ).allowMainThreadQueries().build()
+    }
+    
+    // Initialize AdManager
+    private val adManager by lazy {
+        AdManager(this)
     }
 
     private val viewModel: ChatViewModel by viewModels {
@@ -69,6 +73,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         
+        // Initialize AdMob
+        adManager.initialize()
+        // Preload the first ad
+        adManager.loadAd()
+        
         // Request notification permission and schedule notifications
         requestNotificationPermissionAndSchedule()
         
@@ -78,7 +87,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             GPTFriendTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { _ ->
-                    ChatScreen(this.viewModel)
+                    ChatScreen(this.viewModel, adManager)
                 }
             }
         }
